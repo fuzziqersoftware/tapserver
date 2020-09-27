@@ -1,0 +1,5 @@
+tapserver
+*.a
+*.o
+*.dSYM
+.DS_Store
