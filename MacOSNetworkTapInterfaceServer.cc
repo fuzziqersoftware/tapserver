@@ -62,11 +62,13 @@ Options:\n\
     Listen for a client connection on this Unix socket.\n\
   --show-data\n\
     Print a hex/ASCII dump of all frames sent and received over the interface.\n\
+  --show-size-warnings\n\
+    Print a hex/ASCII dump of all frames sent by the client for which tapserver\n\
+    would compute the wrong frame size. This may be useful when testing with a\n\
+    new use case, to determine if using the framed protocol is necessary.\n\
   --use-framed-protocol\n\
     Prepend each packet with a 2-byte, native-byte-order integer specifying its\n\
     size.\n\
-  --show-size-warnings\n\
-    Show warnings when \n\
 \n", argv0);
 }
 
@@ -86,6 +88,7 @@ int main(int argc, char** argv) {
   // other options
   scoped_fd listen_fd;
   bool show_data = false;
+  bool show_frame_size_warnings = false;
   bool use_framed_protocol = false;
 
   try {
@@ -143,6 +146,8 @@ int main(int argc, char** argv) {
         }
       } else if (!strcmp(argv[x], "--show-data")) {
         show_data = true;
+      } else if (!strcmp(argv[x], "--show-size-warnings")) {
+        show_frame_size_warnings = true;
       } else if (!strcmp(argv[x], "--use-framed-protocol")) {
         use_framed_protocol = true;
       } else {
@@ -170,6 +175,7 @@ int main(int argc, char** argv) {
   if (!client_fd.is_open()) {
     throw runtime_error(string_printf("could not accept client connection (%d)", errno));
   }
+  fprintf(stderr, "client connected\n");
   listen_fd.close();
 
   signal(SIGQUIT, &signal_handler);
@@ -212,16 +218,16 @@ int main(int argc, char** argv) {
         for (string frame = tap.recv(0); !frame.empty(); frame = tap.recv(0)) {
           ssize_t computed_size = MacOSNetworkTapInterface::get_frame_size(
               frame.data(), frame.size());
-          if (computed_size != frame.size()) {
+          if (show_frame_size_warnings && (computed_size != frame.size())) {
             fprintf(stderr,
-                "warning: outgoing frame size (0x%zX) would be incorrectly computed (0x%zX)\n",
+                "\nWarning: outgoing frame size (0x%zX) would be incorrectly computed (0x%zX)\n",
                 frame.size(), computed_size);
             print_data(stderr, frame);
-          }
-          if (show_data) {
+          } else if (show_data) {
             fprintf(stderr, "\nTo tap client:\n");
             print_data(stderr, frame);
           }
+
           if (use_framed_protocol) {
             uint16_t size = frame.size();
             writex(client_fd, &size, sizeof(uint16_t));
