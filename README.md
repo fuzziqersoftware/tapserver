@@ -36,6 +36,19 @@ In general, you should use the framed protocol if either:
 - You need to use any protocols that aren't IP or ARP
 - The client sometimes sends incorrectly-sized packets (for example, garbage data after the end of an ARP packet)
 
+#### Usage with Dolphin (GameCube/Wii emulator)
+
+Go to Config -> GameCube and choose "Broadband Adapter (tapserver)" in the SP1 menu. Then run tapserver like this (replace 192.168.0.5 with the address you want to be assigned to the host, if needed):
+
+    sudo ./tapserver --listen=/tmp/dolphin-tap --use-framed-protocol --ip-address=192.168.0.5
+
+You'll have to configure the game's network settings appropriately. For connecting Phantasy Star Online to a locally-running proxy or private server, for example, you could use settings like this:
+- Disable DHCP (manually set an IP address)
+- IP address: 192.168.0.20
+- Subnet mask: 255.255.255.0
+- Default gateway: 192.168.0.5
+- DNS server: 192.168.0.5
+
 ## Future
 
 Some improvements I'd like to make in the future:
