@@ -10,7 +10,7 @@ However, these socket connections aren't exactly the same as tap interfaces. The
 
 ## Compiling
 
-1. Build and install [phosg](https://www.github.com/fuzziqersoftare/phosg).
+1. Build and install [phosg](https://github.com/fuzziqersoftware/phosg).
 2. Run `make`. This will produce the library and the server executable.
 3. Optionally, `sudo make install`. This is only necessary if you want the library and server on default paths.
 
