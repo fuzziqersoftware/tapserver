@@ -14,7 +14,7 @@ using namespace std;
 
 bool should_exit = false;
 
-void signal_handler(int signum) {
+void signal_handler(int) {
   should_exit = true;
 }
 
@@ -218,7 +218,7 @@ int main(int argc, char** argv) {
         for (string frame = tap.recv(0); !frame.empty(); frame = tap.recv(0)) {
           ssize_t computed_size = MacOSNetworkTapInterface::get_frame_size(
               frame.data(), frame.size());
-          if (show_frame_size_warnings && (computed_size != frame.size())) {
+          if (show_frame_size_warnings && (static_cast<size_t>(computed_size) != frame.size())) {
             fprintf(stderr,
                 "\nWarning: outgoing frame size (0x%zX) would be incorrectly computed (0x%zX)\n",
                 frame.size(), computed_size);
@@ -262,8 +262,10 @@ int main(int argc, char** argv) {
               fprintf(stderr,
                   "warning: frame size (0x%zX) would be incorrectly computed (0x%zX)\n",
                   size, computed_size);
+              size_t bytes_to_print = size > static_cast<ssize_t>(available_bytes)
+                  ? available_bytes : size;
               print_data(stderr, read_buffer.data() + offset + skip_bytes,
-                  size > available_bytes ? available_bytes : size);
+                  bytes_to_print);
             }
           } else {
             size = tap.get_frame_size(read_buffer.data() + offset, read_buffer.size() - offset);

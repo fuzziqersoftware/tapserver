@@ -11,7 +11,7 @@ However, these socket connections aren't exactly the same as tap interfaces. The
 ## Compiling
 
 1. Build and install [phosg](https://github.com/fuzziqersoftware/phosg).
-2. Run `make`. This will produce the library and the server executable.
+2. Run `cmake . && make`. This will produce the library and the server executable.
 3. Optionally, `sudo make install`. This is only necessary if you want the library and server on default paths.
 
 ## Usage
@@ -20,13 +20,13 @@ There are two ways to use tapserver: as a library or as a server.
 
 ### As a library
 
-If you're the author of a program targeting the macOS platform and you want to use a tap interface, you can link with the included library. This library implements a class you can instantiate to directly read and write individual packets through a tap interface, removing the need for an intermediary. However, using the library requires elevated privileges, so it may be desirable to use the server anyway.
+If you're the author of a program targeting the macOS platform and you want to use a tap interface, you can link with the included library (libtapinterface). This library implements a class you can instantiate to directly read and write individual packets through a tap interface, removing the need for an intermediary. However, using the library requires elevated privileges, so it may be desirable to use the server anyway.
 
 To use the library, create a MacOSNetworkTapInterface object and give it two unused feth device numbers (you can see if any feth devices already exist by running `ifconfig`). You'll also need to give it a MAC address and IP address; these apply to the host side of the connection. Once constructed, call open(); if open() doesn't throw, then the devices are created and ready. You can then call recv() and send() to read and write individual packets. (If recv() returns an empty string, there were no packets available within the timeout.) The interface object's destructor closes the stream and cleans up the system interfaces.
 
 ### As a server
 
-Run `./tapserver` for detailed usage information. You'll probably need `sudo`.
+Run `./tapserver` for detailed usage information. You'll probably need `sudo` to do anything useful with it.
 
 The server can be used with existing software that uses a tap interface, provided that the software can be told to open a socket instead of /dev/tapN or can use a passed-in or inherited file descriptor. The server will wait for a connection, then open create and configure the network interface. It will forward data between the network interface and the stream socket bidirectionally until one is closed, at which point it will delete the network interface and exit.
 

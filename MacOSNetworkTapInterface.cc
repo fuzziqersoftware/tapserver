@@ -317,7 +317,7 @@ void MacOSNetworkTapInterface::on_data_available() {
   } else if (size == 0) {
     throw runtime_error("network interface was closed");
   } else {
-    for (size_t offset = 0; offset < size;) {
+    for (ssize_t offset = 0; offset < size;) {
       const bpf_hdr* header = reinterpret_cast<const bpf_hdr*>(
           receive_buffer.data() + offset);
 
