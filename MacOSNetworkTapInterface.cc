@@ -134,8 +134,8 @@ void MacOSNetworkTapInterface::open() {
         errno));
   }
 
-  this->io_device_name = string_printf("feth%d", this->io_device_number);
-  this->network_device_name = string_printf("feth%d", this->network_device_number);
+  this->io_device_name = string_printf("feth%zd", this->io_device_number);
+  this->network_device_name = string_printf("feth%zd", this->network_device_number);
   run_process({this->ifconfig_command, this->io_device_name, "create"});
   run_process({this->ifconfig_command, this->network_device_name, "create"});
 
