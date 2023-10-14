@@ -7,24 +7,23 @@ struct prf_ra {
   u_char reserved : 6;
 } prf_ra;
 
-#include <sys/ioctl.h>
-#include <netinet/in.h>
 #include <arpa/inet.h>
 #include <net/bpf.h>
-#include <net/if.h>
 #include <net/ethernet.h>
+#include <net/if.h>
 #include <net/ndrv.h>
+#include <netinet/in.h>
 #include <netinet/ip.h>
 #include <netinet/ip6.h>
 #include <netinet6/in6_var.h>
 #include <netinet6/nd6.h>
+#include <sys/ioctl.h>
 
 #include <phosg/Network.hh>
 #include <phosg/Process.hh>
+#include <phosg/Strings.hh>
 
 using namespace std;
-
-
 
 struct arp {
   uint16_t hardware_type;
@@ -99,8 +98,6 @@ ssize_t MacOSNetworkTapInterface::get_frame_size(const void* data, size_t size) 
   return (subsize > 0) ? (sizeof(ether_header) + subsize) : subsize;
 }
 
-
-
 MacOSNetworkTapInterface::MacOSNetworkTapInterface(
     uint8_t mac_address[6],
     uint8_t ip_address[4],
@@ -111,13 +108,13 @@ MacOSNetworkTapInterface::MacOSNetworkTapInterface(
     bool enable_nud,
     bool enable_router_advertisements,
     const char* ifconfig_command)
-  : network_device_number(network_device_number),
-    io_device_number(io_device_number),
-    mtu(mtu),
-    metric(metric),
-    enable_nud(enable_nud),
-    enable_router_advertisements(enable_router_advertisements),
-    ifconfig_command(ifconfig_command) {
+    : network_device_number(network_device_number),
+      io_device_number(io_device_number),
+      mtu(mtu),
+      metric(metric),
+      enable_nud(enable_nud),
+      enable_router_advertisements(enable_router_advertisements),
+      ifconfig_command(ifconfig_command) {
 
   memcpy(this->mac_address, mac_address, 6);
   memcpy(this->ip_address, ip_address, 4);
@@ -134,8 +131,8 @@ void MacOSNetworkTapInterface::open() {
         errno));
   }
 
-  this->io_device_name = string_printf("feth%d", this->io_device_number);
-  this->network_device_name = string_printf("feth%d", this->network_device_number);
+  this->io_device_name = string_printf("feth%zd", this->io_device_number);
+  this->network_device_name = string_printf("feth%zd", this->network_device_number);
   run_process({this->ifconfig_command, this->io_device_name, "create"});
   run_process({this->ifconfig_command, this->network_device_name, "create"});
 
@@ -151,8 +148,7 @@ void MacOSNetworkTapInterface::open() {
 
   run_process({this->ifconfig_command, this->io_device_name, "peer", this->network_device_name});
   run_process({this->ifconfig_command, this->io_device_name, "mtu", "16370", "up"});
-  run_process({
-      this->ifconfig_command,
+  run_process({this->ifconfig_command,
       this->network_device_name,
       "mtu", string_printf("%zu", this->mtu),
       "metric", string_printf("%zu", this->metric),
@@ -189,9 +185,7 @@ void MacOSNetworkTapInterface::open() {
           struct in6_ifreq ifr;
           memset(&ifr, 0, sizeof(ifr));
           strncpy(ifr.ifr_name, this->network_device_name.c_str(), sizeof(ifr.ifr_name));
-          uint32_t ioctl_request = enable_router_advertisements ?
-              _IOWR('i', 132, struct in6_ifreq) :
-              _IOWR('i', 133, struct in6_ifreq);
+          uint32_t ioctl_request = enable_router_advertisements ? _IOWR('i', 132, struct in6_ifreq) : _IOWR('i', 133, struct in6_ifreq);
           if (ioctl(s, ioctl_request, &ifr)) {
             fprintf(stderr,
                 "warning: cannot %s IPv6 router advertisements (%d)\n",
@@ -226,7 +220,8 @@ void MacOSNetworkTapInterface::open() {
     try {
       this->bpf_fd.open(device_name.c_str(), O_RDWR);
       break;
-    } catch (const cannot_open_file&) { }
+    } catch (const cannot_open_file&) {
+    }
   }
 
   {

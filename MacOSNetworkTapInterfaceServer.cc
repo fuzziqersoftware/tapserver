@@ -1,24 +1,21 @@
 #include <stdint.h>
 #include <sys/socket.h>
 
-#include <string>
 #include <phosg/Filesystem.hh>
 #include <phosg/Network.hh>
 #include <phosg/Process.hh>
+#include <phosg/Strings.hh>
+#include <string>
 
 #include "MacOSNetworkTapInterface.hh"
 
 using namespace std;
-
-
 
 bool should_exit = false;
 
 void signal_handler(int) {
   should_exit = true;
 }
-
-
 
 void print_usage(FILE* stream, const char* argv0) {
   fprintf(stream, "\
@@ -69,10 +66,9 @@ Options:\n\
   --use-framed-protocol\n\
     Prepend each packet with a 2-byte, native-byte-order integer specifying its\n\
     size.\n\
-\n", argv0);
+\n",
+      argv0);
 }
-
-
 
 int main(int argc, char** argv) {
   // tap interface options
@@ -108,7 +104,7 @@ int main(int argc, char** argv) {
         memcpy(mac_address, mac.data(), 6);
       } else if (!strncmp(argv[x], "--ip-address=", 13)) {
         if (sscanf(&argv[x][13], "%hhu.%hhu.%hhu.%hhu", &ip_address[0],
-            &ip_address[1], &ip_address[2], &ip_address[3]) != 4) {
+                &ip_address[1], &ip_address[2], &ip_address[3]) != 4) {
           throw invalid_argument("--ip-address must be 4 decimal bytes");
         }
       } else if (!strncmp(argv[x], "--mtu=", 6)) {
@@ -208,7 +204,8 @@ int main(int argc, char** argv) {
       int tap_events = 0;
       try {
         tap_events = ready_fds.at(tap.get_fd());
-      } catch (const out_of_range&) { }
+      } catch (const out_of_range&) {
+      }
 
       if (tap_events & POLLHUP) {
         fprintf(stderr, "tap disconnected\n");
@@ -239,7 +236,8 @@ int main(int argc, char** argv) {
       int client_events = 0;
       try {
         client_events = ready_fds.at(client_fd);
-      } catch (const out_of_range&) { }
+      } catch (const out_of_range&) {
+      }
 
       if (client_events & POLLHUP) {
         fprintf(stderr, "client disconnected\n");
@@ -263,7 +261,8 @@ int main(int argc, char** argv) {
                   "warning: frame size (0x%zX) would be incorrectly computed (0x%zX)\n",
                   size, computed_size);
               size_t bytes_to_print = size > static_cast<ssize_t>(available_bytes)
-                  ? available_bytes : size;
+                  ? available_bytes
+                  : size;
               print_data(stderr, read_buffer.data() + offset + skip_bytes,
                   bytes_to_print);
             }
@@ -284,11 +283,17 @@ int main(int argc, char** argv) {
             break;
           }
 
-          if (show_data) {
-            fprintf(stderr, "\nFrom tap client:\n");
-            print_data(stderr, read_buffer.data() + offset + skip_bytes, size);
+          if (size == 0) {
+            if (show_data) {
+              fprintf(stderr, "From tap client: (heartbeat)\n");
+            }
+          } else {
+            if (show_data) {
+              fprintf(stderr, "\nFrom tap client:\n");
+              print_data(stderr, read_buffer.data() + offset + skip_bytes, size);
+            }
+            tap.send(read_buffer.data() + offset + skip_bytes, size);
           }
-          tap.send(read_buffer.data() + offset + skip_bytes, size);
           offset = end_offset;
         }
 
